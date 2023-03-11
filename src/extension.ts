@@ -7,6 +7,7 @@ import CodeActionProvider from './codeActionProvider';
 import { log } from './util';
 import { TemplateType } from './template/templateType';
 import CommandExecutor from './command/commandExecutor';
+import RefactorCommandExecutor from './command/refactorCommandExecutor';
 
 export function activate(context: vscode.ExtensionContext): void {
     const extension = Extension.GetInstance();
@@ -19,11 +20,20 @@ export function activate(context: vscode.ExtensionContext): void {
     //         )
     //     );
     // });
-    Extension.GetKnonwCommands().forEach((commandExecutor, key)=> {
+    Extension.GetKnonwCommands().forEach((commandExecutor, key) => {
         context.subscriptions.push(
             vscode.commands.registerCommand(
                 commandExecutor.getCommand(),
                 async (options: RegisterCommandCallbackArgument) => await extension.startExecutor(options, key, commandExecutor)
+            )
+        );
+    });
+
+    Extension.GetRefactorKnownCommands().forEach((commandExecutor) => {
+        context.subscriptions.push(
+            vscode.commands.registerCommand(
+                commandExecutor.getCommand(),
+                async (options: RegisterCommandCallbackArgument) => await extension.startRefactorExecutor(options, commandExecutor)
             )
         );
     });
@@ -52,6 +62,20 @@ export class Extension {
             ? vscode.workspace.workspaceFolders[0].uri.fsPath : undefined;
     }
 
+
+    public async startRefactorExecutor(options: RegisterCommandCallbackArgument, executor: RefactorCommandExecutor): Promise<void> {
+
+     
+        const extension = Extension.GetCurrentVscodeExtension();
+
+        if (!extension) {
+            vscode.window.showErrorMessage('Weird, but the extension you are currently using could not be found');
+
+            return;
+        }
+
+        executor.execute(options.path);
+    }
     public async startExecutor(options: RegisterCommandCallbackArgument, hintName: string, executor: CommandExecutor): Promise<void> {
         const incomingPath = this._getIncomingPath(options);
 
@@ -91,6 +115,7 @@ export class Extension {
 
     private static TemplatesPath = 'templates';
     private static KnownCommands: Map<string, CommandExecutor>;
+    private static RefactorKnownCommands: Map<string, RefactorCommandExecutor>;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private static CurrentVscodeExtension: vscode.Extension<any> | undefined = undefined;
     private static Instance: Extension;
@@ -136,7 +161,7 @@ export class Extension {
         this.KnownCommands.set('Struct', new CommandExecutor('createStruct', [TemplateType.Struct]));
         this.KnownCommands.set('Controller', new CommandExecutor('createController', [TemplateType.Controller]));
         this.KnownCommands.set('ApiController', new CommandExecutor('createApiController', [TemplateType.ApiController]));
-        this.KnownCommands.set('Razor_Page', new CommandExecutor('createRazorPage', [ TemplateType.RazorPageClass, TemplateType.RazorPageTemplate]));
+        this.KnownCommands.set('Razor_Page', new CommandExecutor('createRazorPage', [TemplateType.RazorPageClass, TemplateType.RazorPageTemplate]));
         this.KnownCommands.set('XUnit', new CommandExecutor('createXUnitTest', [TemplateType.XUnit]));
         this.KnownCommands.set('NUnit', new CommandExecutor('createNUnitTest', [TemplateType.NUnit]));
         this.KnownCommands.set('MSTest', new CommandExecutor('createMSTest', [TemplateType.MsTest]));
@@ -146,6 +171,16 @@ export class Extension {
         this.KnownCommands.set('UWP_Resource', new CommandExecutor('createUwpResourceFile', [TemplateType.UWPResource]));
 
         return this.KnownCommands;
+    }
+    static GetRefactorKnownCommands(): Map<string, RefactorCommandExecutor> {
+        if (this.RefactorKnownCommands) {
+            return this.RefactorKnownCommands;
+        }
+
+        this.RefactorKnownCommands = new Map();
+        this.RefactorKnownCommands.set('RefactorNamespace', new RefactorCommandExecutor('refactorNamespace'));
+
+        return this.RefactorKnownCommands;
     }
 }
 

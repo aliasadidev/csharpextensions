@@ -4,7 +4,7 @@
     "description": "C# IDE Extensions for VSCode",
     "author": "KreativJos",
     "license": "MIT",
-    "version": "1.7.3",
+    "version": "1.7.4",
     "publisher": "kreativ-software",
     "engines": {
         "vscode": "^1.56.0"
@@ -44,6 +44,10 @@
             {
                 "id": "csharpextensions.new",
                 "label": "New C#"
+            },
+            {
+                "id": "csharpextensions.refactor",
+                "label": "Refactor"
             }
         ],
         "commands": [
@@ -102,6 +106,10 @@
             {
                 "command": "csharpextensions.createMSTest",
                 "title": "MSTest"
+            },
+            {
+                "command": "csharpextensions.refactorNamespace",
+                "title": "Adjust Namespace"
             }
         ],
         "menus": {
@@ -163,11 +171,22 @@
                     "command": "csharpextensions.createMSTest"
                 }
             ],
+            "csharpextensions.refactor": [
+                {
+                    "group": "00_basics@0",
+                    "command": "csharpextensions.refactorNamespace"
+                }
+            ],
             "explorer/context": [
                 {
                     "submenu": "csharpextensions.new",
                     "group": "navigation@-1",
                     "when": "explorerResourceIsFolder"
+                },
+                {
+                    "submenu": "csharpextensions.refactor",
+                    "group": "navigation@-1",
+                    "when": "explorerResourceIsFolder || resourceExtname == .cs"
                 }
             ]
         },
@@ -204,8 +223,8 @@
     },
     "scripts": {
         "vscode:prepublish": "tsc -p ./ && webpack --mode production",
-        "compile": "tsc -p ./ && yarn lint",
-        "compileDev": "tsc -p ./ && yarn lint && webpack --mode development",
+        "compile": "tsc -p ./",
+        "compileDev": "tsc -p ./ && webpack --mode development",
         "watch": "tsc -watch -p ./",
         "lint": "eslint src --ext ts",
         "test": "node ./out/test/runTest.js",
